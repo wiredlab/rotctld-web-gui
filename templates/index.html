@@ -55,6 +55,11 @@
                 socket.emit('halt_rotator', {});
             }
 
+            setRotator = function setRotator(rotator_key_val){
+                socket.emit('set_rotator', {rotator_key: rotator_key_val});
+            };
+
+            // Tell the server we are connected and ready for data.
             socket.on('connect', function() {
                 socket.emit('client_connected', {data: 'I\'m connected!'});
                 // This will cause the server to update us with the latest position and setpoint data.
@@ -65,12 +70,27 @@
                 socket.emit('get_position',{});
             }, 1000); 
 
+
+
         });
     </script>
 </head>
 <body>
     <div id="autorx_header"><h2>ARK LOGO LA1K Rotor Web Interface</h2></div>
     <hr>
+
+    {# Rotor menu #}
+
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+    {% for rotator_name in rotator_names %}
+        <label class="btn btn-secondary">
+            <input type="radio" name="options" id="{{ rotator_name }}" autocomplete="off" onclick="setRotator({{ rotator_name }})"> {{ rotator_name }}
+        </label>
+    {% endfor %}
+    </div>
+
+
+    <div id="autorx_header"><h2>Rotctld Web GUI</h2></div>
     <div class="container-fluid">
 	<div class="row">
 		<div class="col">
