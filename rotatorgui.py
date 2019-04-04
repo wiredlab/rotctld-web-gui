@@ -166,19 +166,9 @@ def update_azimuth_setpoint(data):
 	rotator.set_azel(current_setpoint['azimuth'], current_setpoint['elevation'])
 	update_client_display({})
 
-
-@socketio.on('home_rotator', namespace='/update_status')
-def home_rotator(data):
-	current_setpoint['azimuth'] = HOME_POS[0]
-	current_setpoint['elevation'] = HOME_POS[1]
-	rotator.set_azel(current_setpoint['azimuth'], current_setpoint['elevation'])
-	update_client_display({})
-
-
 @socketio.on('halt_rotator', namespace='/update_status')
 def halt_rotator(data):
 	rotator.halt()
-
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
@@ -190,7 +180,6 @@ def read_position(data):
 		current_position['azimuth'] = _az
 		current_position['elevation'] = _el
 		update_client_display({})
-
 
 
 if __name__ == "__main__":

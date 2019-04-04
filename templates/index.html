@@ -4,14 +4,14 @@
     <title>Rotctld Web Interface</title>
 
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styling.css') }}" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/jquery-3.3.1.min.js')}}"></script>
     <script src="{{ url_for('static', filename='js/socket.io-1.4.5.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
 
         var updateSetpoint;
         var haltRotator;
-        var homeRotator;
-
+	var increment = 1;
         $(document).ready(function() {
             // Use the 'update_status' namespace for all of our traffic
             namespace = '/update_status';
@@ -27,9 +27,11 @@
                 var _az = msg.azimuth.toFixed(1);
                 var _el = msg.elevation.toFixed(1);
 
-                var _text = "<h3>Current Position:  <small>" + _az + ' , ' + _el + "</small></h3>";
+		var _aztext = "<h3><small>" + _az + "</small></h3>"
+		var _eltext = "<h3><small>" + _el + "</small></h3>"
 
-                $('#current_position').html(_text);
+		$('#az_pos').html(_aztext);
+		$('#el_pos').html(_eltext);
             });
 
             // Handle a setpoint update.
@@ -37,9 +39,11 @@
                 var _az = msg.azimuth.toFixed(1);
                 var _el = msg.elevation.toFixed(1);
 
-                var _text = "<h3>Setpoint:  <small>" + _az + ' , ' + _el + "</small></h3>";
+		var _aztext = "<h3><small>" + _az + "</small></h3>"
+		var _eltext = "<h3><small>" + _el + "</small></h3>"
 
-                $('#setpoint').html(_text);
+		$('#az_target_pos').html(_aztext);
+		$('#el_target_pos').html(_eltext);
             });       
 
             // Button callback functions. Fairly self explanatory.
@@ -51,17 +55,12 @@
                 socket.emit('halt_rotator', {});
             }
 
-            homeRotator = function homeRotator(){
-                socket.emit('home_rotator', {});
-            }
-
-            // Tell the server we are connected and ready for data.
             socket.on('connect', function() {
                 socket.emit('client_connected', {data: 'I\'m connected!'});
                 // This will cause the server to update us with the latest position and setpoint data.
             });
 
-            // Request current rotator position every second. (Too much?)
+            // Request current rotator position every second.
             window.setInterval(function () {
                 socket.emit('get_position',{});
             }, 1000); 
@@ -70,71 +69,64 @@
     </script>
 </head>
 <body>
-    <div id="autorx_header"><h2>Rotctld Web GUI</h2></div>
+    <div id="autorx_header"><h2>ARK LOGO LA1K Rotor Web Interface</h2></div>
+    <hr>
     <div class="container-fluid">
+	<div class="row">
+		<div class="col">
+			<div id="az"><h3>Azimuth:</h3></div>
+		</div>
+		<div class="col">		
+			<div id="az_pos"><h3></h3></div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col">
+			<div id="az"><h3>Target:</h3></div>
+		</div>
+		<div class="col">		
+			<div id="az_target_pos"><h3></h3></div>
+		</div>
+	</div>
         <div class="row">
-            <div class='col-12'>
-                <div id="current_position"><h3>Current Pos:</h3></div>
+            <div class='col'>
+                <button type="button" class="btn btn-primary btn-block large-font" id="az_ccw" onclick="updateSetpoint('azimuth', -increment)">↶</button>
             </div>
-        </div>
-        <div class="row">
-            <div class='col-12'>
-                <div id="setpoint"><h3>Setpoint:</h3></div>
-            </div>
-        </div>
-        <div class="row">
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="az_minus10" onclick="updateSetpoint('azimuth', -10)">AZ -10</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="az_minus5" onclick="updateSetpoint('azimuth', -5)">AZ -5</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="az_minus1" onclick="updateSetpoint('azimuth', -1)">AZ -1</button>
-            </div>
-        </div>
-        <div class="row">
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="az_plus10" onclick="updateSetpoint('azimuth', 10)">AZ +10</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="az_plus5" onclick="updateSetpoint('azimuth', 5)">AZ +5</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="az_plus1" onclick="updateSetpoint('azimuth', 1)">AZ +1</button>
+            <div class='col'>
+		    <button type="button" class="btn btn-primary btn-block large-font" id="az_cw" onclick="updateSetpoint('azimuth', +increment)">↷</button>
             </div>
         </div>
         <br>
+{# Elevation handling #} 
+	<hr>
+	<div class="row">
+		<div class="col">
+			<div id="el"><h3>Elevation:</h3></div>
+		</div>
+		<div class="col">		
+			<div id="el_pos"><h3></h3></div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col">
+			<div id="el_tar"><h3>Target:</h3></div>
+		</div>
+		<div class="col">		
+			<div id="el_target_pos"><h3></h3></div>
+		</div>
+	</div>
         <div class="row">
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_minus10" onclick="updateSetpoint('elevation', -10)">EL -10</button>
+            <div class='col'>
+		    <button type="button" class="btn btn-primary btn-block large-font" id="el_ccw" onclick="updateSetpoint('elevation', -increment)">↶</button>
             </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_minus5" onclick="updateSetpoint('elevation', -5)">EL -5</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_minus1" onclick="updateSetpoint('elevation', -1)">EL -1</button>
-            </div>
-        </div>
-        <div class="row">
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_plus10" onclick="updateSetpoint('elevation', 10)">EL +10</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_plus5" onclick="updateSetpoint('elevation', 5)">EL +5</button>
-            </div>
-            <div class='col-xs-2'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_plus1" onclick="updateSetpoint('elevation', 1)">EL +1</button>
+            <div class='col'>
+		    <button type="button" class="btn btn-primary btn-block large-font" id="el_cw" onclick="updateSetpoint('elevation', +increment)">↷</button>
             </div>
         </div>
         <br>
+	<hr>
         <div class="row">
-            <div class='col-xs-6'>
-                <button type="button" class="btn btn-primary btn-lg" id="halt" onclick="haltRotator()">HALT</button>
-            </div>
-            <div class='col-xs-6'>
-                <button type="button" class="btn btn-primary btn-lg" id="el_minus5" onclick="homeRotator()">HOME</button>
-            </div>
+        	<button type="button" class="btn btn-danger btn-block large-font" id="halt" onclick="haltRotator()">HALT</button>
         </div>
     </div>
 </body>
