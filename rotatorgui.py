@@ -14,7 +14,6 @@ import sys
 import datetime
 
 
-
 # Define Flask Application, and allow automatic reloading of templates for dev
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -118,6 +117,8 @@ class ROTCTLD(object):
     	""" Immediately halt rotator movement, if it support it """
     	self.send_command('S')
 
+# Rotator map.
+rotators = {}
 
 # Rotator singleton object.
 rotator = None
@@ -129,7 +130,7 @@ rotator = None
 @app.route("/")
 def flask_index():
     """ Render main index page """
-    return flask.render_template('index.html')
+    return flask.render_template('index.html', rotator_names=rotators.keys())
 
 
 def flask_emit_event(event_name="none", data={}):
@@ -170,6 +171,13 @@ def update_azimuth_setpoint(data):
 def halt_rotator(data):
 	rotator.halt()
 
+
+@socketio.on('set_rotator', namespace='/update_status')
+def set_rotator(data):
+        rotator_key = data['rotator_key']
+        print(rotator_key)
+
+
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
 	(_az, _el) = rotator.get_azel()
@@ -184,26 +192,31 @@ def read_position(data):
 
 if __name__ == "__main__":
     import argparse
+    import ConfigParser
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--listen_port",default=5001,help="Port to run Web Server on. (Default: 5001)")
-    parser.add_argument('--host', type=str, default='localhost', help="Rotctld server host. (Default: localhost)")
-    parser.add_argument('--port', type=int, default=4533, help="Rotctld server port. (Default: 4533)")
+    parser.add_argument("--config-file", default='/usr/local/etc/rotors.conf', help="Path to config file specifying rotor ports and names.")
     args = parser.parse_args()
 
-    # Try and connect to the rotator.
-    try:
-    	rotator = ROTCTLD(hostname=args.host, port=args.port)
-    	_rot_model = rotator.connect()
-    	print("Connected to rotctld - Rotator Model: " + str(_rot_model))
+    # Parse config file.
+    HOSTNAME = 'localhost'
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(args.config_file, 'r'))
 
-    except Exception as e:
-    	print("Could not connect to rotctld server- %s" % str(e))
-    	sys.exit(1)
+    # Connect to rotctld instances specified in config file.
+    for rotor in config.sections():
+        port = int(config.get(rotor, 'rotctld_port'))
+        name = rotor
+
+        rotator = ROTCTLD(hostname=HOSTNAME, port=port)
+        rotator.connect()
+        rotators[name] = rotator
 
     # Run the Flask app, which will block until CTRL-C'd.
     socketio.run(app, host='0.0.0.0', port=args.listen_port)
 
     # Close the rotator connection.
-    rotator.close()
+    for rotator in rotators:
+        rotator.close()
 
