@@ -130,7 +130,14 @@ rotator = None
 @app.route("/")
 def flask_index():
     """ Render main index page """
-    return flask.render_template('index.html', rotator_names=rotators.keys())
+    return flask.render_template('index.html', chosen_rotor_name=rotators.keys()[0], rotator_names=rotators.keys())
+
+@app.route("/<rotorname>")
+def flask_show_rotor(rotorname):
+    if rotorname not in rotators.keys():
+        return flask.render_template('404.html')
+
+    return flask.render_template('index.html', chosen_rotor_name=rotorname, rotator_names=rotators.keys())
 
 
 def flask_emit_event(event_name="none", data={}):
@@ -170,12 +177,6 @@ def update_azimuth_setpoint(data):
 @socketio.on('halt_rotator', namespace='/update_status')
 def halt_rotator(data):
 	rotator.halt()
-
-
-@socketio.on('set_rotator', namespace='/update_status')
-def set_rotator(data):
-        rotator_key = data['rotator_key']
-        print(rotator_key)
 
 
 @socketio.on('get_position', namespace='/update_status')
