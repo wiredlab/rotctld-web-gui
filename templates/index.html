@@ -9,6 +9,7 @@
     <script src="{{ url_for('static', filename='js/socket.io-1.4.5.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
 
+        var currentRotator = '{{ chosen_rotor_name }}';
         var updateSetpoint;
         var haltRotator;
 	var increment = 1;
@@ -48,22 +49,22 @@
 
             // Button callback functions. Fairly self explanatory.
             updateSetpoint = function updateSetpoint(motor_val, delta_val){
-                socket.emit('update_setpoint', {delta: delta_val, motor: motor_val});
+                socket.emit('update_setpoint', {delta: delta_val, motor: motor_val, rotator_key: currentRotator});
             };
 
             haltRotator = function haltRotator(){
-                socket.emit('halt_rotator', {});
+                socket.emit('halt_rotator', {rotator_key: currentRotator});
             }
+
 
             // Tell the server we are connected and ready for data.
             socket.on('connect', function() {
-                socket.emit('client_connected', {data: 'I\'m connected!'});
-                // This will cause the server to update us with the latest position and setpoint data.
+                socket.emit('client_connected', {rotator_key: currentRotator});
             });
 
             // Request current rotator position every second.
             window.setInterval(function () {
-                socket.emit('get_position',{});
+                socket.emit('get_position',{rotator_key: currentRotator});
             }, 1000); 
 
 
