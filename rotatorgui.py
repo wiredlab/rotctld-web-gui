@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 #   ROTCTLD Basic Web GUI
 #
@@ -25,10 +25,6 @@ app.jinja_env.auto_reload = True
 socketio = SocketIO(app)
 
 current_setpoints = {}
-
-# Home position azimuth , elevation
-HOME_POS = [0.0, 0.0]
-
 
 class ROTCTLD(object):
     """ rotctld (hamlib) communication class """
@@ -63,9 +59,9 @@ class ROTCTLD(object):
         """ Send a command to the connected rotctld instance,
             and return the return value.
         """
-        self.sock.sendall(command+'\n')
+        self.sock.sendall((command+'\n').encode())
         try:
-            return self.sock.recv(1024)
+            return self.sock.recv(1024).decode()
         except:
             return None
 
@@ -126,14 +122,16 @@ rotators = {}
 @app.route("/")
 def flask_index():
     """ Render main index page """
-    return flask.render_template('index.html', chosen_rotor_name=rotators.keys()[0], rotator_names=rotators.keys())
+    rotator_names = list(rotators)
+    return flask.render_template('index.html', chosen_rotor_name=rotator_names[0], rotator_names=rotator_names)
 
 @app.route("/<rotorname>")
 def flask_show_rotor(rotorname):
-    if rotorname not in rotators.keys():
+    rotator_names = list(rotators)
+    if rotorname not in rotator_names:
         return flask.render_template('404.html')
 
-    return flask.render_template('index.html', chosen_rotor_name=rotorname, rotator_names=rotators.keys())
+    return flask.render_template('index.html', chosen_rotor_name=rotorname, rotator_names=rotator_names)
 
 
 def flask_emit_event(event_name="none", data={}, client_id=None):
@@ -151,62 +149,62 @@ def client_connected(data):
 
 @socketio.on('update_setpoint', namespace='/update_status')
 def update_azimuth_setpoint(data):
-        rotator_key = data['rotator_key']
+    rotator_key = data['rotator_key']
 
-        #current setpoints
-        set_azimuth = current_setpoints[rotator_key]['azimuth']
-        set_elevation = current_setpoints[rotator_key]['elevation']
+    #current setpoints
+    set_azimuth = current_setpoints[rotator_key]['azimuth']
+    set_elevation = current_setpoints[rotator_key]['elevation']
 
-	motor = data['motor']
-	delta = data['delta']
+    motor = data['motor']
+    delta = data['delta']
 
-        #limit azi and ele to 0-360 and 0-90 for setpoint display purposes,
-        #though rotctld will take care of this automatically
-	if motor == 'azimuth':
-                set_azimuth = (set_azimuth + delta) % 360
-	elif motor == 'elevation':
-                set_elevation += delta
-                if set_elevation > 90.0:
-			set_elevation = 90.0
-                elif set_elevation < 0.0:
-                        set_elevation = 0.0
+    #limit azi and ele to 0-360 and 0-90 for setpoint display purposes,
+    #though rotctld will take care of this automatically
+    if motor == 'azimuth':
+            set_azimuth = (set_azimuth + delta) % 360
+    elif motor == 'elevation':
+            set_elevation += delta
+            if set_elevation > 90.0:
+                    set_elevation = 90.0
+            elif set_elevation < 0.0:
+                    set_elevation = 0.0
 
-        #set rotctld to current setpoint
-	rotators[data['rotator_key']].set_azel(set_azimuth, set_elevation)
+    #set rotctld to current setpoint
+    rotators[data['rotator_key']].set_azel(set_azimuth, set_elevation)
 
-        #update book-keeping
-        current_setpoints[rotator_key]['azimuth'] = set_azimuth
-        current_setpoints[rotator_key]['elevation'] = set_elevation
+    #update book-keeping
+    current_setpoints[rotator_key]['azimuth'] = set_azimuth
+    current_setpoints[rotator_key]['elevation'] = set_elevation
 
-        #update client display
-	flask_emit_event('setpoint_event', current_setpoints[rotator_key], request.sid)
+    #update client display
+    flask_emit_event('setpoint_event', current_setpoints[rotator_key], request.sid)
 
 @socketio.on('halt_rotator', namespace='/update_status')
 def halt_rotator(data):
-	rotators[data['rotator_key']].halt()
+    rotators[data['rotator_key']].halt()
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
-        rotor_key = data['rotator_key']
-	(_az, _el) = rotators[rotor_key].get_azel()
+    rotor_key = data['rotator_key']
+    (_az, _el) = rotators[rotor_key].get_azel()
 
-	if (_az == None):
-		return
-	else:
-                current_position = {}
-		current_position['azimuth'] = _az
-		current_position['elevation'] = _el
+    if (_az == None):
+        return
+    else:
+        current_position = {}
+        current_position['azimuth'] = _az
+        current_position['elevation'] = _el
 
-                #display current position
-                flask_emit_event('position_event', current_position, request.sid)
+        #display current position
+        flask_emit_event('position_event', current_position, request.sid)
 
-                #display current setpoint
-                flask_emit_event('setpoint_event', current_setpoints[rotor_key], request.sid)
+        #display current setpoint
+        flask_emit_event('setpoint_event', current_setpoints[rotor_key], request.sid)
 
 
 if __name__ == "__main__":
     import argparse
-    import ConfigParser
+    from configparser import ConfigParser
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--listen_port",default=5001,help="Port to run Web Server on. (Default: 5001)")
@@ -215,7 +213,7 @@ if __name__ == "__main__":
 
     # Parse config file.
     HOSTNAME = 'localhost'
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     config.readfp(open(args.config_file, 'r'))
 
     # Connect to rotctld instances specified in config file.

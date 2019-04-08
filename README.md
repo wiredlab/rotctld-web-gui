@@ -8,7 +8,7 @@ It is in no way polished, and likely has some interesting bugs (particulatly if 
 
 
 ## Dependencies
-* Python (2.7, until I fix things)
+* Python (3.x)
 * Python Modules: flask, flask-socketio  (can obtain using pip)
 
 ## Configuration file
