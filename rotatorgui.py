@@ -211,7 +211,13 @@ def update_azimuth_setpoint(data):
 
 @socketio.on('halt_rotator', namespace='/update_status')
 def halt_rotator(data):
-    rotators[data['rotator_key']].halt()
+    name = data['rotator_key']
+    rotators[name].halt()
+
+    #update setpoint to current position
+    (_az, _el) = rotators[name].get_azel()
+    current_setpoints[name] = {'azimuth': _az, 'elevation': _el}
+    flask_emit_event('setpoint_event', current_setpoints[name], request.sid)
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
@@ -261,9 +267,7 @@ if __name__ == "__main__":
         rotator.connect()
         rotators[name] = rotator
 
-        #set setpoints to current positions
-        (_az, _el) = rotators[name].get_azel()
-        current_setpoints[name] = {'azimuth': _az, 'elevation': _el}
+        current_setpoints[name] = {'azimuth': 0.0, 'elevation': 0.0}
 
     # Run the Flask app, which will block until CTRL-C'd.
     socketio.run(app, host='0.0.0.0', port=args.listen_port)
