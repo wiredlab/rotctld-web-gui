@@ -158,6 +158,7 @@ def client_connected(data):
 
 @socketio.on('update_setpoint', namespace='/update_status')
 def update_azimuth_setpoint(data):
+    print(data)
     rotator_key = data['rotator_key']
 
     #current setpoints
@@ -176,7 +177,7 @@ def update_azimuth_setpoint(data):
         if is_increment_update:
             setpoint += data['delta']
         else:
-            setpoint = data['val']
+            setpoint = float(data['val'])
         return setpoint
 
     #set new setpoints

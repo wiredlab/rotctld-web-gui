@@ -130,7 +130,7 @@
 			<input type="number" class="form-control form-control-lg" placeholder="New target [0-360]" id="az_form">
 		</div>
 		<div class="col">
-			<button type=button" class="btn btn-primary btn-block large-font" id="az_form_confirm" onclick="updateSetpointAbs('azimuth', document.getElementById('az_form'))">⏎</button>
+			<button type=button" class="btn btn-primary btn-block large-font" id="az_form_confirm" onclick="updateSetpointAbs('azimuth', document.getElementById('az_form').value)">⏎</button>
 		</div>
 	</div>
 {# Elevation handling #} 
@@ -165,7 +165,7 @@
 			<input type="number" class="form-control form-control-lg" placeholder="New target [0-180]" id="el_form">
 		</div>
 		<div class="col">
-			<button type=button" class="btn btn-primary btn-block large-font" id="el_form_confirm" onclick="updateSetpointAbs('elevation', document.getElementById('el_form'))">⏎</button>
+			<button type=button" class="btn btn-primary btn-block large-font" id="el_form_confirm" onclick="updateSetpointAbs('elevation', document.getElementById('el_form').value)">⏎</button>
 		</div>
 	</div>
 	<hr>
