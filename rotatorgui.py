@@ -165,18 +165,33 @@ def update_azimuth_setpoint(data):
     set_elevation = current_setpoints[rotator_key]['elevation']
 
     motor = data['motor']
-    delta = data['delta']
+
+    def update_setpoint_value(setpoint):
+        """
+        Update setpoint: if data contains 'delta', update with increment,
+        otherwise update to an absolute value.
+        """
+
+        is_increment_update = ('delta' in list(data))
+        if is_increment_update:
+            setpoint += data['delta']
+        else:
+            setpoint = data['val']
+        return setpoint
+
+    #set new setpoints
+    if motor == 'azimuth':
+        set_azimuth = update_setpoint_value(set_azimuth)
+    elif motor == 'elevation':
+        set_elevation = update_setpoint_value(set_elevation)
 
     #limit azi and ele to 0-360 and 0-90 for setpoint display purposes,
     #though rotctld will take care of this automatically
-    if motor == 'azimuth':
-            set_azimuth = (set_azimuth + delta) % 360
-    elif motor == 'elevation':
-            set_elevation += delta
-            if set_elevation > 90.0:
-                    set_elevation = 90.0
-            elif set_elevation < 0.0:
-                    set_elevation = 0.0
+    set_azimuth = set_azimuth % 360
+    if set_elevation > 90.0:
+            set_elevation = 90.0
+    elif set_elevation < 0.0:
+            set_elevation = 0.0
 
     #set rotctld to current setpoint
     rotators[data['rotator_key']].set_azel(set_azimuth, set_elevation)
