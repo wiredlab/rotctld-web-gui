@@ -48,15 +48,18 @@
             });       
 
             // Button callback functions. Fairly self explanatory.
+
+	    //update setpoint with increment
             updateSetpoint = function updateSetpoint(motor_val, delta_val){
                 socket.emit('update_setpoint', {delta: delta_val, motor: motor_val, rotator_key: currentRotator});
             };
 
-            updateSetpointAbs = function updateSetpoint(motor_val, val){
+            //update setpoint with absolute rotor values
+	    updateSetpointAbs = function updateSetpointAbs(motor_val, val){
                 socket.emit('update_setpoint', {val: val, motor: motor_val, rotator_key: currentRotator});
             };
 
-		haltRotator = function haltRotator(){
+            haltRotator = function haltRotator(){
                 socket.emit('halt_rotator', {rotator_key: currentRotator});
             }
 
