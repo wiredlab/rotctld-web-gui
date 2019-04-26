@@ -13,6 +13,7 @@ import time
 import socket
 import sys
 import datetime
+import threading
 
 
 # Define Flask Application, and allow automatic reloading of templates for dev
@@ -38,6 +39,9 @@ class ROTCTLD(object):
         self.hostname = hostname
         self.port = port
 
+        #mutex for preventing simultaneous access to socket from multiple clients at the same time
+        self.lock = threading.Lock()
+
 
     def connect(self):
         """ Connect to rotctld instance """
@@ -59,11 +63,16 @@ class ROTCTLD(object):
         """ Send a command to the connected rotctld instance,
             and return the return value.
         """
+        self.lock.acquire()
+
         self.sock.sendall((command+'\n').encode())
         try:
-            return self.sock.recv(1024).decode()
+            recv_msg = self.sock.recv(1024).decode()
         except:
-            return None
+            recv_msg = None
+
+        self.lock.release()
+        return recv_msg
 
 
     def get_model(self):
