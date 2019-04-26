@@ -52,7 +52,11 @@
                 socket.emit('update_setpoint', {delta: delta_val, motor: motor_val, rotator_key: currentRotator});
             };
 
-            haltRotator = function haltRotator(){
+            updateSetpointAbs = function updateSetpoint(motor_val, val){
+                socket.emit('update_setpoint', {val: val, motor: motor_val, rotator_key: currentRotator});
+            };
+
+		haltRotator = function haltRotator(){
                 socket.emit('halt_rotator', {rotator_key: currentRotator});
             }
 
@@ -73,7 +77,7 @@
     </script>
 </head>
 <body>
-    <div id="autorx_header"><h2>ARK LOGO LA1K Rotor Web Interface</h2></div>
+    <div id="autorx_header"><h2>LA1K Rotor Web Interface</h2></div>
     <hr>
 
     {# Rotor menu #}
@@ -117,7 +121,15 @@
 		    <button type="button" class="btn btn-primary btn-block large-font" id="az_cw" onclick="updateSetpoint('azimuth', +increment)">↷</button>
             </div>
         </div>
-        <br>
+	<br>
+	<div class="form-row">
+		<div class="col-7">
+			<input type="number" class="form-control form-control-lg" placeholder="New target [0-360]" id="az_form">
+		</div>
+		<div class="col">
+			<button type=button" class="btn btn-primary btn-block large-font" id="az_form_confirm" onclick="updateSetpointAbs('azimuth', document.getElementById('az_form'))">⏎</button>
+		</div>
+	</div>
 {# Elevation handling #} 
 	<hr>
 	<div class="row">
@@ -145,6 +157,14 @@
             </div>
         </div>
         <br>
+	<div class="form-row">
+		<div class="col-7">
+			<input type="number" class="form-control form-control-lg" placeholder="New target [0-180]" id="el_form">
+		</div>
+		<div class="col">
+			<button type=button" class="btn btn-primary btn-block large-font" id="el_form_confirm" onclick="updateSetpointAbs('elevation', document.getElementById('el_form'))">⏎</button>
+		</div>
+	</div>
 	<hr>
         <div class="row">
         	<button type="button" class="btn btn-danger btn-block large-font" id="halt" onclick="haltRotator()">HALT</button>
