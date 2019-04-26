@@ -124,6 +124,9 @@ class ROTCTLD(object):
 # Rotator map.
 rotators = {}
 
+# Map over rotator resolutions.
+increments = {}
+
 #
 #   Flask Routes
 #
@@ -132,7 +135,8 @@ rotators = {}
 def flask_index():
     """ Render main index page """
     rotator_names = list(rotators)
-    return flask.render_template('index.html', chosen_rotor_name=rotator_names[0], rotator_names=rotator_names)
+    rotor_increments = list(increments)
+    return flask.render_template('index.html', chosen_rotor_name=rotator_names[0], rotor_increment=rotor_increments[0], rotator_names=rotator_names)
 
 @app.route("/<rotorname>")
 def flask_show_rotor(rotorname):
@@ -140,7 +144,9 @@ def flask_show_rotor(rotorname):
     if rotorname not in rotator_names:
         return flask.render_template('404.html')
 
-    return flask.render_template('index.html', chosen_rotor_name=rotorname, rotator_names=rotator_names)
+    rotor_increment = increments[rotorname]
+
+    return flask.render_template('index.html', chosen_rotor_name=rotorname, rotor_increment=rotor_increment, rotator_names=rotator_names)
 
 
 def flask_emit_event(event_name="none", data={}, client_id=None):
@@ -158,7 +164,6 @@ def client_connected(data):
 
 @socketio.on('update_setpoint', namespace='/update_status')
 def update_azimuth_setpoint(data):
-    print(data)
     rotator_key = data['rotator_key']
 
     #current setpoints
@@ -245,6 +250,11 @@ if __name__ == "__main__":
     for rotor in config.sections():
         port = int(config.get(rotor, 'rotctld_port'))
         name = rotor
+
+        #add rotor resolution to rotor increments
+        DEFAULT_INCREMENT = 1
+        resolution = float(config.get(rotor, 'resolution', fallback=DEFAULT_INCREMENT))
+        increments[name] = resolution
 
         #connect to rotctld
         rotator = ROTCTLD(hostname=HOSTNAME, port=port)
