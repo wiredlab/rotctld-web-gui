@@ -135,8 +135,7 @@ increments = {}
 def flask_index():
     """ Render main index page """
     rotator_names = list(rotators)
-    rotor_increments = list(increments)
-    return flask.render_template('index.html', chosen_rotor_name=rotator_names[0], rotor_increment=rotor_increments[0], rotator_names=rotator_names)
+    return flask.render_template('index.html', chosen_rotor_name=rotator_names[0], rotor_increment=increments[rotator_names[0]], rotator_names=rotator_names)
 
 @app.route("/<rotorname>")
 def flask_show_rotor(rotorname):
