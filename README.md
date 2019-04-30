@@ -1,11 +1,9 @@
 # Basic Rotctld Web GUI
-Mark Jessop 2018-07-07
 
-This repository contains a very basic rotctld control web interface, targeted for use on a mobile browser.
-I wrote this out of a need to have an easy way to test a new az/el rotator while on a roof, with the controller down in my radio shack.
-
-It is in no way polished, and likely has some interesting bugs (particulatly if multiple clients are connected). Take caution when using it to control expensive antenna arrays!!!
-
+This Flask application was forked off from
+https://github.com/darksidelemm/rotctld-web-gui (Mark Jessop, 2018-07-07), with
+the intention of adding support for multiple rotors and adapting it for the use
+at the LA1K club station.
 
 ## Dependencies
 * Python (3.x)
