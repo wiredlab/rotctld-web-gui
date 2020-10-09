@@ -15,6 +15,7 @@ Uses a configuration file to specify rotors to connect to. Example:
 
 ```
 [ROTOR1]
+rotctld_host=localhost
 rotctld_port=4533
 
 [ROTOR2]

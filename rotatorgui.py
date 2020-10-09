@@ -241,12 +241,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config file.
-    HOSTNAME = 'localhost'
+    default_hostname = 'localhost'
     config = ConfigParser()
-    config.readfp(open(args.config_file, 'r'))
+    config.read_file(open(args.config_file, 'r'))
 
     # Connect to rotctld instances specified in config file.
     for rotor in config.sections():
+        hostname = config.get(rotor, 'rotctld_host', fallback=default_hostname)
         port = int(config.get(rotor, 'rotctld_port'))
         name = rotor
 
@@ -256,7 +257,7 @@ if __name__ == "__main__":
         increments[name] = resolution
 
         #connect to rotctld
-        rotator = ROTCTLD(hostname=HOSTNAME, port=port)
+        rotator = ROTCTLD(hostname=hostname, port=port)
         rotator.connect()
         rotators[name] = rotator
 
