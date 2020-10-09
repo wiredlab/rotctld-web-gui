@@ -13,6 +13,7 @@ import time
 import socket
 import sys
 import datetime
+import logging
 
 
 # Define Flask Application, and allow automatic reloading of templates for dev
@@ -28,7 +29,7 @@ current_setpoints = {}
 
 class ROTCTLD(object):
     """ rotctld (hamlib) communication class """
-    # Note: This is a massive hack. 
+    # Note: This is a massive hack.
 
     def __init__(self, hostname, port=4533, poll_rate=5, timeout=5, az_180 = False):
         """ Open a connection to rotctld, and test it for validity """
@@ -111,8 +112,8 @@ class ROTCTLD(object):
 
 
     def halt(self):
-    	""" Immediately halt rotator movement, if it support it """
-    	self.send_command('S')
+        """ Immediately halt rotator movement, if it support it """
+        self.send_command('S')
 
 # Rotator map.
 rotators = {}
