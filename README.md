@@ -1,9 +1,21 @@
 # Basic Rotctld Web GUI
 
-This Flask application was forked off from
+This Flask application was forked from
+https://github.com/bjorgan/rotctld-web-gui which was forked from
 https://github.com/darksidelemm/rotctld-web-gui (Mark Jessop, 2018-07-07), with
 the intention of adding support for multiple rotors and adapting it for the use
-at the LA1K club station.
+at the LA1K club station (https://github.com/bjorgan/rotctld-web-gui)
+
+Changed to add the visual dial and tweak the behavior for use in the !WIRED Lab.
+
+The app is intended to be easy to use from a mobile browser, e.g. from on the
+roof.
+Better desktop styling help wanted!
+
+
+![Screenshot](screenshot-mobile.png)
+
+
 
 ## Dependencies
 * Python (3.x)
@@ -15,7 +27,7 @@ Uses a configuration file to specify rotors to connect to. Example:
 
 ```
 [ROTOR1]
-rotctld_host=localhost
+rotctld_host=10.42.0.100
 rotctld_port=4533
 
 [ROTOR2]
