@@ -13,6 +13,7 @@ import time
 import socket
 import sys
 import datetime
+import logging
 
 
 # Define Flask Application, and allow automatic reloading of templates for dev
@@ -28,7 +29,7 @@ current_setpoints = {}
 
 class ROTCTLD(object):
     """ rotctld (hamlib) communication class """
-    # Note: This is a massive hack. 
+    # Note: This is a massive hack.
 
     def __init__(self, hostname, port=4533, poll_rate=5, timeout=5, az_180 = False):
         """ Open a connection to rotctld, and test it for validity """
@@ -111,8 +112,8 @@ class ROTCTLD(object):
 
 
     def halt(self):
-    	""" Immediately halt rotator movement, if it support it """
-    	self.send_command('S')
+        """ Immediately halt rotator movement, if it support it """
+        self.send_command('S')
 
 # Rotator map.
 rotators = {}
@@ -240,12 +241,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parse config file.
-    HOSTNAME = 'localhost'
+    default_hostname = 'localhost'
     config = ConfigParser()
-    config.readfp(open(args.config_file, 'r'))
+    config.read_file(open(args.config_file, 'r'))
 
     # Connect to rotctld instances specified in config file.
     for rotor in config.sections():
+        hostname = config.get(rotor, 'rotctld_host', fallback=default_hostname)
         port = int(config.get(rotor, 'rotctld_port'))
         name = rotor
 
@@ -255,7 +257,7 @@ if __name__ == "__main__":
         increments[name] = resolution
 
         #connect to rotctld
-        rotator = ROTCTLD(hostname=HOSTNAME, port=port)
+        rotator = ROTCTLD(hostname=hostname, port=port)
         rotator.connect()
         rotators[name] = rotator
 
