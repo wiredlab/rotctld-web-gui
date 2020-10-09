@@ -3,17 +3,227 @@
 <head>
     <title>Rotctld Web Interface</title>
 
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/styling.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/jquery-3.3.1.min.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/socket.io-1.4.5.js') }}"></script>
-    <script type="text/javascript" charset="utf-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
 
+    <link href="{{ url_for('static', filename='css/styling.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div id="autorx_header"><h2>Rotctld Web GUI</h2></div>
+    {# Rotor menu #}
+
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+    {% for rotator_name in rotator_names %}
+        {% if rotator_name == chosen_rotor_name %}
+            <label class="btn btn-secondary active">
+        {% else %}
+            <label class="btn btn-secondary">
+        {% endif %}
+            <input type="radio" name="options" id="{{ rotator_name }}" autocomplete="off" onclick="window.location.href='{{ rotator_name }}'"> {{ rotator_name }}
+        </label>
+    {% endfor %}
+    </div>
+
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <canvas id="gauge-az"></canvas>
+            </div>
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <h1><div id="az">Azimuth:</div></h1>
+                    </div>
+                    <div class="col">
+                        <h1><div id="az_pos"></div></h1>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h1><div id="az">Target:</div></h1>
+                    </div>
+                    <div class="col">
+                        <h1><div id="az_target_pos"></div></h1>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class='col'>
+                        <button type="button" class="btn btn-primary btn-block large-font" id="az_ccw"
+                            onclick="updateSetpoint('azimuth', -increment)">↶1</button>
+                    </div>
+                    <div class='col'>
+                        <button type="button" class="btn btn-primary btn-block large-font" id="az_cw"
+                            onclick="updateSetpoint('azimuth', +increment)">1↷</button>
+                    </div>
+                </div>
+                <br>
+                <div class="form-row">
+                    <div class="col">
+                        <input type="number" class="form-control form-control-lg large-font" placeholder="" id="az_form"
+                        onchange="updateSetpointAbs('azimuth', document.getElementById('az_form').value)">
+                    </div>
+                    <div class="col">
+                        <button type=button" class="btn btn-primary btn-block large-font" id="az_form_confirm"
+                            onclick="updateSetpointAbs('azimuth', document.getElementById('az_form').value)">GO ⏎</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{# Elevation handling #}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <canvas id="gauge-el"></canvas>
+            </div>
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                        <h1><div id="el">Elevation:</div></h1>
+                    </div>
+                    <div class="col">
+                        <h1><div id="el_pos"></div></h1>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h1><div id="el_tar">Target:</div></h1>
+                    </div>
+                    <div class="col">
+                        <h1><div id="el_target_pos"></div></h1>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class='col'>
+                        <button type="button" class="btn btn-primary btn-block large-font" id="el_ccw"
+                            onclick="updateSetpoint('elevation', -increment)">↶1</button>
+                    </div>
+                    <div class='col'>
+                        <button type="button" class="btn btn-primary btn-block large-font" id="el_cw"
+                            onclick="updateSetpoint('elevation', +increment)">1↷</button>
+                    </div>
+                </div>
+                <br>
+                <div class="form-row">
+                    <div class="col">
+                        <input type="number" class="form-control form-control-lg large-font" placeholder="" id="el_form"
+                            onchange="updateSetpointAbs('elevation', document.getElementById('el_form').value)">
+                    </div>
+                    <div class="col">
+                        <button type=button" class="btn btn-primary btn-block large-font" id="el_form_confirm"
+                            onclick="updateSetpointAbs('elevation', document.getElementById('el_form').value)">GO ⏎</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <button type="button" class="btn btn-danger btn-block large-font" id="halt"
+            onclick="haltRotator()">HALT</button>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+
+    <script src="{{ url_for('static', filename='js/gauge.min.js') }}"></script>
+
+    <script type="text/javascript" charset="utf-8">
         var currentRotator = '{{ chosen_rotor_name }}';
         var updateSetpoint;
         var haltRotator;
-	var increment = {{ rotor_increment }};
+        var increment = {{ rotor_increment }};
+
         $(document).ready(function() {
+            var gaugeAz = new RadialGauge({
+                renderTo: 'gauge-az',
+                title: "Azimuth",
+                height: 400,
+                minValue: 0,
+                maxValue: 360,
+                majorTicks: [0, 45, 90, 135, 180, 235, 270, 315, 0],
+                minorTicks: 9,
+                ticksAngle: 360,
+                startAngle: 180,
+                strokeTicks: true,
+                highlights: false,
+                colorPlate: "#fff",
+                colorMajorTicks: "#000000",
+                colorMinorTicks: "#aaa",
+                colorNumbers: "#333",
+                colorNeedle: "rgba(255, 0, 0, 1)",
+                colorNeedleEnd: "rgba(255, 0, 0, 1)",
+                valueBox: false,
+                valueTextShadow: false,
+                valueInt: 3,
+                valueDec: 0,
+                colorCircleInner: "#fff",
+                colorNeedleCircleOuter: "#ccc",
+                needleCircleSize: 10,
+                needleCircleInner: false,
+                needleCircleOuter: true,
+                needleType: "arrow",
+                needleStart: 0,
+                needleEnd: 100,
+                needleWidth: 5,
+                borders: false,
+                borderInnerWidth: 3,
+                borderMiddleWidth: 0,
+                borderOuterWidth: 0,
+                colorBorderInner: "#aaa",
+                colorNeedleShadowDown: false,
+                borderShadowWidth: 0,
+                animation: false, //!!window.requestAnimationFrame,
+                animationRule: "linear",
+                animationDuration: 10
+            }).draw();
+
+            var gaugeEl = new RadialGauge({
+                renderTo: 'gauge-el',
+                title: "Elevation",
+                height: 400,
+                minValue: 0,
+                maxValue: 180,
+                majorTicks: [0, 45, 90, 135, 180],
+                minorTicks: 9,
+                ticksAngle: 180,
+                startAngle: 90,
+                strokeTicks: true,
+                highlights: false,
+                colorPlate: "#fff",
+                colorMajorTicks: "#000000",
+                colorMinorTicks: "#aaa",
+                colorNumbers: "#333",
+                colorNeedle: "rgba(255, 0, 0, 1)",
+                colorNeedleEnd: "rgba(255, 0, 0, 1)",
+                valueBox: false,
+                valueTextShadow: false,
+                valueInt: 3,
+                valueDec: 0,
+                colorCircleInner: "#fff",
+                colorNeedleCircleOuter: "#ccc",
+                needleCircleSize: 10,
+                needleCircleInner: false,
+                needleCircleOuter: true,
+                needleType: "arrow",
+                needleStart: 0,
+                needleEnd: 100,
+                needleWidth: 5,
+                borders: false,
+                borderInnerWidth: 3,
+                borderMiddleWidth: 0,
+                borderOuterWidth: 0,
+                colorBorderInner: "#aaa",
+                colorBorderOuter: "#ccc",
+                colorNeedleShadowDown: false,
+                borderShadowWidth: 0,
+                animation: false, //!!window.requestAnimationFrame,
+                animationRule: "linear",
+                animationDuration: 10
+            }).draw();
+
+
             // Use the 'update_status' namespace for all of our traffic
             namespace = '/update_status';
 
@@ -23,16 +233,19 @@
             var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
 
 
+            //
+            // Event handlers
+            //
+
             // Handle a position update.
             socket.on('position_event', function(msg) {
                 var _az = msg.azimuth.toFixed(1);
                 var _el = msg.elevation.toFixed(1);
 
-		var _aztext = "<h3><small>" + _az + "</small></h3>"
-		var _eltext = "<h3><small>" + _el + "</small></h3>"
-
-		$('#az_pos').html(_aztext);
-		$('#el_pos').html(_eltext);
+                $('#az_pos').html(_az);
+                $('#el_pos').html(_el);
+                gaugeAz.value = _az;
+                gaugeEl.value = _el;
             });
 
             // Handle a setpoint update.
@@ -40,22 +253,22 @@
                 var _az = msg.azimuth.toFixed(1);
                 var _el = msg.elevation.toFixed(1);
 
-		var _aztext = "<h3><small>" + _az + "</small></h3>"
-		var _eltext = "<h3><small>" + _el + "</small></h3>"
+                $('#az_target_pos').html(_az);
+                $('#el_target_pos').html(_el);
+            });
 
-		$('#az_target_pos').html(_aztext);
-		$('#el_target_pos').html(_eltext);
-            });       
 
+            //
             // Button callback functions. Fairly self explanatory.
+            //
 
-	    //update setpoint with increment
+            //update setpoint with increment
             updateSetpoint = function updateSetpoint(motor_val, delta_val){
                 socket.emit('update_setpoint', {delta: delta_val, motor: motor_val, rotator_key: currentRotator});
             };
 
             //update setpoint with absolute rotor values
-	    updateSetpointAbs = function updateSetpointAbs(motor_val, val){
+            updateSetpointAbs = function updateSetpointAbs(motor_val, val){
                 socket.emit('update_setpoint', {val: val, motor: motor_val, rotator_key: currentRotator});
             };
 
@@ -72,103 +285,8 @@
             // Request current rotator position every second.
             window.setInterval(function () {
                 socket.emit('get_position',{rotator_key: currentRotator});
-            }, 1000); 
-
-
-
+            }, 1000);
         });
     </script>
-</head>
-<body>
-    <div id="autorx_header"><h2>Rotctld Web GUI</h2></div>
-    {# Rotor menu #}
-
-    <div class="btn-group btn-group-toggle" data-toggle="buttons">
-    {% for rotator_name in rotator_names %}
-        {% if rotator_name == chosen_rotor_name %}
-		<label class="btn btn-secondary active">
-	{% else %}
-		<label class="btn btn-secondary">
-	{% endif %}
-		<input type="radio" name="options" id="{{ rotator_name }}" autocomplete="off" onclick="window.location.href='{{ rotator_name }}'"> {{ rotator_name }}
-        </label>
-    {% endfor %}
-    </div>
-
-
-    <div class="container-fluid">
-	<div class="row">
-		<div class="col">
-			<div id="az"><h3>Azimuth:</h3></div>
-		</div>
-		<div class="col">		
-			<div id="az_pos"><h3></h3></div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div id="az"><h3>Target:</h3></div>
-		</div>
-		<div class="col">		
-			<div id="az_target_pos"><h3></h3></div>
-		</div>
-	</div>
-        <div class="row">
-            <div class='col'>
-                <button type="button" class="btn btn-primary btn-block large-font" id="az_ccw" onclick="updateSetpoint('azimuth', -increment)">↶</button>
-            </div>
-            <div class='col'>
-		    <button type="button" class="btn btn-primary btn-block large-font" id="az_cw" onclick="updateSetpoint('azimuth', +increment)">↷</button>
-            </div>
-        </div>
-	<br>
-	<div class="form-row">
-		<div class="col">
-			<input type="number" class="form-control form-control-lg large-font" placeholder="[0-360]" id="az_form">
-		</div>
-		<div class="col">
-			<button type=button" class="btn btn-primary btn-block large-font" id="az_form_confirm" onclick="updateSetpointAbs('azimuth', document.getElementById('az_form').value)">⏎</button>
-		</div>
-	</div>
-{# Elevation handling #} 
-	<hr>
-	<div class="row">
-		<div class="col">
-			<div id="el"><h3>Elevation:</h3></div>
-		</div>
-		<div class="col">		
-			<div id="el_pos"><h3></h3></div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col">
-			<div id="el_tar"><h3>Target:</h3></div>
-		</div>
-		<div class="col">		
-			<div id="el_target_pos"><h3></h3></div>
-		</div>
-	</div>
-        <div class="row">
-            <div class='col'>
-		    <button type="button" class="btn btn-primary btn-block large-font" id="el_ccw" onclick="updateSetpoint('elevation', -increment)">↶</button>
-            </div>
-            <div class='col'>
-		    <button type="button" class="btn btn-primary btn-block large-font" id="el_cw" onclick="updateSetpoint('elevation', +increment)">↷</button>
-            </div>
-        </div>
-        <br>
-	<div class="form-row">
-		<div class="col">
-			<input type="number" class="form-control form-control-lg large-font" placeholder="[0-180]" id="el_form">
-		</div>
-		<div class="col">
-			<button type=button" class="btn btn-primary btn-block large-font" id="el_form_confirm" onclick="updateSetpointAbs('elevation', document.getElementById('el_form').value)">⏎</button>
-		</div>
-	</div>
-	<hr>
-        <div class="row">
-        	<button type="button" class="btn btn-danger btn-block large-font" id="halt" onclick="haltRotator()">HALT</button>
-        </div>
-    </div>
 </body>
 </html>
