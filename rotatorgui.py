@@ -261,12 +261,13 @@ if __name__ == "__main__":
         rotator.connect()
         rotators[name] = rotator
 
-        current_setpoints[name] = {'azimuth': 0.0, 'elevation': 0.0}
+        (_az, _el) = rotators[name].get_azel()
+        current_setpoints[name] = {'azimuth': _az, 'elevation': _el}
 
     # Run the Flask app, which will block until CTRL-C'd.
     socketio.run(app, host='0.0.0.0', port=args.listen_port)
 
     # Close the rotator connection.
-    for rotator in rotators:
+    for rotator in rotators.values():
         rotator.close()
 
