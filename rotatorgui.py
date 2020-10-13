@@ -26,6 +26,7 @@ app.jinja_env.auto_reload = True
 socketio = SocketIO(app)
 
 current_setpoints = {}
+current_positions = {}
 
 class ROTCTLD(object):
     """ rotctld (hamlib) communication class """
@@ -204,31 +205,29 @@ def update_azimuth_setpoint(data):
 
 @socketio.on('halt_rotator', namespace='/update_status')
 def halt_rotator(data):
-    name = data['rotator_key']
-    rotators[name].halt()
+    rotator = data['rotator_key']
+    rotators[rotator].halt()
 
     #update setpoint to current position
-    (_az, _el) = rotators[name].get_azel()
-    current_setpoints[name] = {'azimuth': _az, 'elevation': _el}
-    flask_emit_event('setpoint_event', current_setpoints[name], request.sid)
+    (_az, _el) = rotators[rotator].get_azel()
+    current_setpoints[rotator] = {'azimuth': _az, 'elevation': _el}
+    flask_emit_event('setpoint_event', current_setpoints[rotator], request.sid)
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
-    rotor_key = data['rotator_key']
-    (_az, _el) = rotators[rotor_key].get_azel()
+    rotator = data['rotator_key']
+    (_az, _el) = rotators[rotator].get_azel()
 
     if (_az == None):
         return
     else:
-        current_position = {}
-        current_position['azimuth'] = _az
-        current_position['elevation'] = _el
+        current_positions[rotator] = {'azimuth': _az, 'elevation': _el}
 
         #display current position
-        flask_emit_event('position_event', current_position, request.sid)
+        flask_emit_event('position_event', current_positions[rotator], request.sid)
 
         #display current setpoint
-        flask_emit_event('setpoint_event', current_setpoints[rotor_key], request.sid)
+        flask_emit_event('setpoint_event', current_setpoints[rotator], request.sid)
 
 
 if __name__ == "__main__":
@@ -263,6 +262,7 @@ if __name__ == "__main__":
 
         (_az, _el) = rotators[name].get_azel()
         current_setpoints[name] = {'azimuth': _az, 'elevation': _el}
+        current_positions[name] = current_setpoints[name]
 
     # Run the Flask app, which will block until CTRL-C'd.
     socketio.run(app, host='0.0.0.0', port=args.listen_port)
