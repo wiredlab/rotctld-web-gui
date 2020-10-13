@@ -116,6 +116,12 @@ class ROTCTLD(object):
         """ Immediately halt rotator movement, if it support it """
         self.send_command('S')
 
+
+def limit(num, minimum, maximum):
+    """Limits input 'num' between minimum and maximum values."""
+    return max(min(num, maximum), minimum)
+
+
 # Rotator map.
 rotators = {}
 
@@ -131,6 +137,7 @@ def flask_index():
     """ Render main index page """
     rotator_names = list(rotators)
     return flask.render_template('index.html', chosen_rotor_name=rotator_names[0], rotor_increment=increments[rotator_names[0]], rotator_names=rotator_names)
+
 
 @app.route("/<rotorname>")
 def flask_show_rotor(rotorname):
@@ -157,51 +164,34 @@ def client_connected(data):
 
 
 @socketio.on('update_setpoint', namespace='/update_status')
-def update_azimuth_setpoint(data):
-    rotator_key = data['rotator_key']
-
-    #current setpoints
-    set_azimuth = current_setpoints[rotator_key]['azimuth']
-    set_elevation = current_setpoints[rotator_key]['elevation']
-
+def update_setpoint(data):
+    rotator = data['rotator_key']
     motor = data['motor']
 
-    def update_setpoint_value(setpoint):
-        """
-        Update setpoint: if data contains 'delta', update with increment,
-        otherwise update to an absolute value.
-        """
-
-        is_increment_update = ('delta' in list(data))
-        if is_increment_update:
-            setpoint += data['delta']
-        else:
-            setpoint = float(data['val'])
-        return setpoint
+    setpoint = current_setpoints[rotator]
+    position = current_positions[rotator]
 
     #set new setpoints
-    if motor == 'azimuth':
-        set_azimuth = update_setpoint_value(set_azimuth)
-    elif motor == 'elevation':
-        set_elevation = update_setpoint_value(set_elevation)
+    if 'delta' in data:
+        setpoint[motor] = position[motor] + data['delta']
+    else:
+        try:
+            setpoint[motor] = float(data['val'])
+        except ValueError:
+            # bogus input, just ignore it and quit
+            return
 
-    #limit azi and ele to 0-360 and 0-90 for setpoint display purposes,
+    #limit azi and ele to 0-360 and 0-180 for setpoint display purposes,
     #though rotctld will take care of this automatically
-    set_azimuth = set_azimuth % 360
-    if set_elevation > 90.0:
-            set_elevation = 90.0
-    elif set_elevation < 0.0:
-            set_elevation = 0.0
+    az = setpoint['azimuth'] = setpoint['azimuth'] % 360
+    el = setpoint['elevation'] = limit(setpoint['elevation'], 0, 180.0)
 
     #set rotctld to current setpoint
-    rotators[data['rotator_key']].set_azel(set_azimuth, set_elevation)
-
-    #update book-keeping
-    current_setpoints[rotator_key]['azimuth'] = set_azimuth
-    current_setpoints[rotator_key]['elevation'] = set_elevation
+    rotators[rotator].set_azel(az, el)
 
     #update client display
-    flask_emit_event('setpoint_event', current_setpoints[rotator_key], request.sid)
+    flask_emit_event('setpoint_event', setpoint, request.sid)
+
 
 @socketio.on('halt_rotator', namespace='/update_status')
 def halt_rotator(data):
@@ -212,6 +202,7 @@ def halt_rotator(data):
     (az, el) = rotators[rotator].get_azel()
     current_setpoints[rotator] = {'azimuth': az, 'elevation': el}
     flask_emit_event('setpoint_event', current_setpoints[rotator], request.sid)
+
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
