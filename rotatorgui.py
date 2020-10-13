@@ -212,7 +212,8 @@ def read_position(data):
     if (az == None):
         return
     else:
-        position = {'azimuth': az, 'elevation': el}
+        # ensure we are updating the dict and not replacing it!
+        position.update({'azimuth': az, 'elevation': el})
 
         #display current position
         emit('position_event', position)
