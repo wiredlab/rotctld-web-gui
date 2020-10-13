@@ -103,10 +103,10 @@ class ROTCTLD(object):
 
         # Attempt to split response by \n (az and el are on separate lines)
         try:
-            response_split = response.split('\n')
-            _current_azimuth = float(response_split[0])
-            _current_elevation = float(response_split[1])
-            return (_current_azimuth, _current_elevation)
+            lines = response.split('\n')
+            az = float(lines[0])
+            el = float(lines[1])
+            return (az, el)
         except:
             logging.error("Could not parse position: %s" % response)
             return (None,None)
@@ -209,19 +209,19 @@ def halt_rotator(data):
     rotators[rotator].halt()
 
     #update setpoint to current position
-    (_az, _el) = rotators[rotator].get_azel()
-    current_setpoints[rotator] = {'azimuth': _az, 'elevation': _el}
+    (az, el) = rotators[rotator].get_azel()
+    current_setpoints[rotator] = {'azimuth': az, 'elevation': el}
     flask_emit_event('setpoint_event', current_setpoints[rotator], request.sid)
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
     rotator = data['rotator_key']
-    (_az, _el) = rotators[rotator].get_azel()
+    (az, el) = rotators[rotator].get_azel()
 
-    if (_az == None):
+    if (az == None):
         return
     else:
-        current_positions[rotator] = {'azimuth': _az, 'elevation': _el}
+        current_positions[rotator] = {'azimuth': az, 'elevation': el}
 
         #display current position
         flask_emit_event('position_event', current_positions[rotator], request.sid)
@@ -260,8 +260,8 @@ if __name__ == "__main__":
         rotator.connect()
         rotators[name] = rotator
 
-        (_az, _el) = rotators[name].get_azel()
-        current_setpoints[name] = {'azimuth': _az, 'elevation': _el}
+        (az, el) = rotators[name].get_azel()
+        current_setpoints[name] = {'azimuth': az, 'elevation': el}
         current_positions[name] = current_setpoints[name]
 
     # Run the Flask app, which will block until CTRL-C'd.
