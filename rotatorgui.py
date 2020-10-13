@@ -7,7 +7,7 @@
 #
 import json
 import flask
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 from flask import request
 import time
 import socket
@@ -150,12 +150,9 @@ def flask_show_rotor(rotorname):
     return flask.render_template('index.html', chosen_rotor_name=rotorname, rotor_increment=rotor_increment, rotator_names=rotator_names)
 
 
-def flask_emit_event(event_name="none", data={}, client_id=None):
-    """ Emit a socketio event to any clients. """
-    socketio.emit(event_name, data, namespace='/update_status', room=client_id)
-
-
+#
 # SocketIO Handlers
+#
 
 @socketio.on('client_connected', namespace='/update_status')
 def client_connected(data):
@@ -190,7 +187,7 @@ def update_setpoint(data):
     rotators[rotator].set_azel(az, el)
 
     #update client display
-    flask_emit_event('setpoint_event', setpoint, request.sid)
+    emit('setpoint_event', setpoint)
 
 
 @socketio.on('halt_rotator', namespace='/update_status')
@@ -201,24 +198,22 @@ def halt_rotator(data):
     #update setpoint to current position
     (az, el) = rotators[rotator].get_azel()
     current_setpoints[rotator] = {'azimuth': az, 'elevation': el}
-    flask_emit_event('setpoint_event', current_setpoints[rotator], request.sid)
+    emit('setpoint_event', current_setpoints[rotator])
 
 
 @socketio.on('get_position', namespace='/update_status')
 def read_position(data):
     rotator = data['rotator_key']
-    (az, el) = rotators[rotator].get_azel()
+    position = current_positions[rotator]
 
+    (az, el) = rotators[rotator].get_azel()
     if (az == None):
         return
     else:
-        current_positions[rotator] = {'azimuth': az, 'elevation': el}
+        position = {'azimuth': az, 'elevation': el}
 
         #display current position
-        flask_emit_event('position_event', current_positions[rotator], request.sid)
-
-        #display current setpoint
-        flask_emit_event('setpoint_event', current_setpoints[rotator], request.sid)
+        emit('position_event', position)
 
 
 if __name__ == "__main__":
