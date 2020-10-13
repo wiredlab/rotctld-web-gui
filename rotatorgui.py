@@ -158,6 +158,8 @@ def flask_show_rotor(rotorname):
 def client_connected(data):
     #display current position
     read_position(data)
+    #and setpoint
+    emit('setpoint_event', current_setpoints[data['rotator_key']])
 
 
 @socketio.on('update_setpoint', namespace='/update_status')
